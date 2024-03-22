@@ -82,7 +82,7 @@ impl SimpleComponent for AppModel {
                 #[name="ip_label"]
                 gtk::Label {
                     #[watch]
-                    set_label: format!("IP: {}{}", model.ip.as_ref().map(|ip| &ip.ip).unwrap_or(&"None".to_string()),model.ip.as_ref().map(|ip| &ip.prefix).unwrap_or(&"None".to_string())).as_str(),
+                    set_label: format!("IP: {}{}", model.ip.as_ref().map(|ip| &ip.ip).unwrap_or(&"Press Generate IP to get an IP".to_string()),model.ip.as_ref().map(|ip| &ip.prefix).unwrap_or(&"".to_string())).as_str(),
                     set_margin_all: 5,
                 },
 
@@ -181,7 +181,7 @@ impl SimpleComponent for AppModel {
         root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let mut model = AppModel {ip: None, user_input: IpModel::default(),valid: Validator::default()};
+        let mut model = AppModel {ip: ip, user_input: IpModel::default(),valid: Validator::default()};
 
         // Insert the macro code generation here
         let widgets = view_output!();
@@ -314,7 +314,6 @@ fn ip_calculations() -> IpModel {
         last_host,
         possible_hosts: number_of_hosts,
     };
-    println!("{:?}", model);
     return model;
 }
 
@@ -346,5 +345,5 @@ fn main() {
     let app = RelmApp::new("timtom2016.com.IpChecker");
 
     relm4_icons::initialize_icons();
-    app.run::<AppModel>(None);
+    app.run::<AppModel>(Some(ip_calculations()));
 }
