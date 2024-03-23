@@ -6,11 +6,11 @@ IP Checker GUI is a simple tool for teachers that can make their students input 
 ```bash
 git clone https://github.com/TimTom2016/IP-Checker-GUI.git
 ```
-2. Install gtk4 for
+2. Install gtk4
 
-   https://gtk-rs.org/gtk4-rs/stable/latest/book/installation.html
+https://gtk-rs.org/gtk4-rs/stable/latest/book/installation.html
 
-3.  Install Rust
+4.  Install Rust
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
