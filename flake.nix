@@ -2,45 +2,91 @@
   description = "Flake for ip_checker";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/24.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   };
 
   outputs = { self, nixpkgs, ... }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
-    in {
-      # Define the package built using Cargo
-      packages.${system}.ip_checker = pkgs.rustPlatform.buildRustPackage rec {
+
+      ipChecker = pkgs.rustPlatform.buildRustPackage rec {
         pname = "ip_checker";
         version = "0.1.0";
 
-        # 'src = self' means we use the repository as the source code.
+        # Use this repository as the source.
         src = self;
 
-        # Use your existing Cargo.lock file
-        cargoLock = {
-          lockFile = ./Cargo.lock;
-        };
+        cargoLock = { lockFile = ./Cargo.lock; };
 
-        # Optional: include pkg-config and your required library dependencies
         nativeBuildInputs = [ pkgs.pkg-config ];
         buildInputs = [
           pkgs.libGL
           pkgs.libxkbcommon
           pkgs.wayland
+          pkgs."gdk-pixbuf"
+          pkgs.graphene
+          pkgs.cairo
+          pkgs.pango
+          pkgs.gtk4
         ];
 
-        # Make sure the built binary finds the necessary libraries at runtime
         LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
           pkgs.libGL
           pkgs.libxkbcommon
           pkgs.wayland
+          pkgs."gdk-pixbuf"
+          pkgs.graphene
+          pkgs.cairo
+          pkgs.pango
+          pkgs.gtk4
         ];
       };
 
-      # You can also set the default package to be your build target
-      defaultPackage = packages.${system}.ip_checker;
+      devEnv = pkgs.mkShell {
+        buildInputs = [
+          pkgs.cargo
+          pkgs.rustc
+          pkgs.rust-analyzer
+          pkgs.libGL
+          pkgs.libxkbcommon
+          pkgs.wayland
+          pkgs."gdk-pixbuf"
+          pkgs.graphene
+          pkgs.cairo
+          pkgs.pango
+          pkgs.gtk4
+        ];
+
+        LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
+          pkgs.libGL
+          pkgs.libxkbcommon
+          pkgs.wayland
+          pkgs."gdk-pixbuf"
+          pkgs.graphene
+          pkgs.cairo
+          pkgs.pango
+          pkgs.gtk4
+        ];
+
+        RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
+      };
+    in {
+      packages.${system} = {
+        # Expose the package as "ipChecker" so it can be referenced as "ip-checker.ipChecker"
+        ipChecker = ipChecker;
+        # Also alias it as the default package for convenience
+        default = ipChecker;
+      };
+
+      defaultPackage.${system} = ipChecker;
+
+      devShells.${system} = {
+        default = devEnv;
+        dev = devEnv;
+      };
+
+      devShell.${system} = devEnv;
     };
 }
 
