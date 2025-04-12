@@ -1,92 +1,49 @@
 {
-  description = "Flake for ip_checker";
+  description = "A simple GTK4 GUI to check your IP address.";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, ... }:
-    let
-      system = "x86_64-linux";
-      pkgs = import nixpkgs { inherit system; };
+  outputs = { self, nixpkgs, flake-utils }:
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = import nixpkgs {
+          inherit system;
+        };
 
-      ipChecker = pkgs.rustPlatform.buildRustPackage rec {
-        pname = "ip_checker";
-        version = "0.1.0";
-
-        # Use this repository as the source.
-        src = self;
-
-        cargoLock = { lockFile = ./Cargo.lock; };
-
-        nativeBuildInputs = [ pkgs.pkg-config ];
-        buildInputs = [
-          pkgs.libGL
-          pkgs.libxkbcommon
-          pkgs.wayland
-          pkgs."gdk-pixbuf"
-          pkgs.graphene
-          pkgs.cairo
-          pkgs.pango
-          pkgs.gtk4
-        ];
-
-        LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
-          pkgs.libGL
-          pkgs.libxkbcommon
-          pkgs.wayland
-          pkgs."gdk-pixbuf"
-          pkgs.graphene
-          pkgs.cairo
-          pkgs.pango
-          pkgs.gtk4
-        ];
-      };
-
-      devEnv = pkgs.mkShell {
-        buildInputs = [
-          pkgs.cargo
-          pkgs.rustc
-          pkgs.rust-analyzer
-          pkgs.libGL
-          pkgs.libxkbcommon
-          pkgs.wayland
-          pkgs."gdk-pixbuf"
-          pkgs.graphene
-          pkgs.cairo
-          pkgs.pango
-          pkgs.gtk4
-        ];
-
-        LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
-          pkgs.libGL
-          pkgs.libxkbcommon
-          pkgs.wayland
-          pkgs."gdk-pixbuf"
-          pkgs.graphene
-          pkgs.cairo
-          pkgs.pango
-          pkgs.gtk4
-        ];
-
-        RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
-      };
-    in {
-      packages.${system} = {
-        # Expose the package as "ipChecker" so it can be referenced as "ip-checker.ipChecker"
-        ipChecker = ipChecker;
-        # Also alias it as the default package for convenience
-        default = ipChecker;
-      };
-
-      defaultPackage.${system} = ipChecker;
-
-      devShells.${system} = {
-        default = devEnv;
-        dev = devEnv;
-      };
-
-      devShell.${system} = devEnv;
-    };
+        ipChecker = pkgs.rustPlatform.buildRustPackage {
+          pname = "ipChecker";
+          version = "0.1.0";
+          src = ./.;
+          cargoLock = {
+            lockFile = ./Cargo.lock;
+          };
+          nativeBuildInputs = with pkgs; [ pkg-config ];
+          buildInputs = with pkgs; [
+            gtk4
+            glib
+            cairo
+            pango
+            gdk-pixbuf
+          ];
+        };
+      in {
+        packages.ipChecker = ipChecker;
+        defaultPackage = ipChecker;
+        devShells.default = pkgs.mkShell {
+          nativeBuildInputs = with pkgs; [
+            pkg-config
+            gtk4
+            glib
+            cairo
+            pango
+            gdk-pixbuf
+            rustc
+            cargo
+          ];
+        };
+      });
 }
 
